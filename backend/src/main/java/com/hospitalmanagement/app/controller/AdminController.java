@@ -1,8 +1,4 @@
-// package com.hospitalmanagement.app.controller;
 
-// public class AdminController {
-    
-// }
 package com.hospitalmanagement.app.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
