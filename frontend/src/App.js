@@ -1,25 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+import HomePage from "./components/HomePage";
+import LoginPage from "./components/LoginPage";
+import DoctorDashboard from "./components/DoctorDashboard";
+import PatientDashboard from "./components/PatientDashboard";
+import AdminDashboard from "./components/AdminDashboard";
+  import PatientAuth from "./components/PatientAuth";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login/:role" element={<LoginPage />} />
+        <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/patient-login" element={<PatientAuth />} />
+        <Route path="/patient-dashboard" element={<PatientDashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
 export default App;
+
+
+// import React from "react";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+// import HomePage from "./components/HomePage";
+// import PatientAuth from "./components/PatientAuth";
+// import PatientDashboard from "./components/PatientDashboard";
+
+// function App() {
+//   return (
+//     <Router>
+//       <Routes>
+//         <Route path="/" element={<HomePage />} />
+//         <Route path="/patient-login" element={<PatientAuth />} />
+//         <Route path="/patient-dashboard" element={<PatientDashboard />} />
+//       </Routes>
+//     </Router>
+//   );
+// }
+
+// export default App;
