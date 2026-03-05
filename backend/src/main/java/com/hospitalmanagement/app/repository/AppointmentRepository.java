@@ -1,15 +1,16 @@
 package com.hospitalmanagement.app.repository;
 
-import com.hospitalmanagement.app.entity.Appointment;
-import com.hospitalmanagement.app.entity.AppointmentStatus;
-import com.hospitalmanagement.app.entity.User;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import com.hospitalmanagement.app.entity.Appointment;
+import com.hospitalmanagement.app.entity.AppointmentStatus;
+import com.hospitalmanagement.app.entity.User;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
