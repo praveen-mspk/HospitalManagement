@@ -1,28 +1,57 @@
 package com.hospitalmanagement.app.repository;
 
-import com.hospitalmanagement.app.entity.Appointment;
-import com.hospitalmanagement.app.entity.AppointmentStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import com.hospitalmanagement.app.entity.Appointment;
+import com.hospitalmanagement.app.entity.AppointmentStatus;
+import com.hospitalmanagement.app.entity.User;
+
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+    List<Appointment> findByDoctor(User doctor);
 
-    // All appointments for a patient
-    List<Appointment> findByPatientIdOrderByAppointmentDateDescStartTimeAsc(Long patientId);
+    List<Appointment> findByPatient(User patient);
 
-    // All appointments for a doctor
-    List<Appointment> findByDoctorIdOrderByAppointmentDateDescStartTimeAsc(Long doctorId);
+    List<Appointment> findByDoctorAndAppointmentDate(
+            User doctor, LocalDate date);
 
-    // Slot conflict check — same doctor, same date, overlapping time, not cancelled
-    boolean existsByDoctorIdAndAppointmentDateAndStartTimeAndStatusNot(
-        Long doctorId,
-        LocalDate appointmentDate,
-        LocalTime startTime,
-        AppointmentStatus status
-    );
+    @Query("""
+                SELECT a FROM Appointment a
+                WHERE a.doctor = :doctor
+                AND a.appointmentDate = :date
+                AND a.status <> 'CANCELLED'
+                AND (
+                    (:startTime < a.endTime AND :endTime > a.startTime)
+                )
+            """)
+    List<Appointment> findOverlappingAppointments(
+            User doctor,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime);
+
+    long countByDoctor(User doctor);
+
+    @Query("""
+                SELECT COUNT(a)
+                FROM Appointment a
+                WHERE a.doctor.department.id = :departmentId
+            """)
+    long countAppointmentsByDepartment(Long departmentId);
+
+    @Query("""
+                SELECT SUM(a.fee)
+                FROM Appointment a
+                WHERE a.doctor.department.id = :departmentId
+                AND a.status = 'COMPLETED'
+            """)
+    Double calculateRevenueByDepartment(Long departmentId);
+
+    List<Appointment> findByStatus(AppointmentStatus status);
 }
