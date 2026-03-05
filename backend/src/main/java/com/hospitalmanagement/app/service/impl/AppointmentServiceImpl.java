@@ -1,19 +1,23 @@
 package com.hospitalmanagement.app.service.impl;
 
-import com.hospitalmanagement.app.dto.AppointmentRequestDTO;
-import com.hospitalmanagement.app.dto.AppointmentResponseDTO;
-import com.hospitalmanagement.app.entity.*;
-import com.hospitalmanagement.app.entity.AppointmentStatus;
-import com.hospitalmanagement.app.repository.AppointmentRepository;
-import com.hospitalmanagement.app.repository.UserRepository;
-import com.hospitalmanagement.app.service.AppointmentService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.hospitalmanagement.app.dto.AppointmentRequestDTO;
+import com.hospitalmanagement.app.dto.AppointmentResponseDTO;
+import com.hospitalmanagement.app.entity.Appointment;
+import com.hospitalmanagement.app.entity.AppointmentStatus;
+import com.hospitalmanagement.app.entity.Role;
+import com.hospitalmanagement.app.entity.User;
+import com.hospitalmanagement.app.repository.AppointmentRepository;
+import com.hospitalmanagement.app.repository.UserRepository;
+import com.hospitalmanagement.app.service.AppointmentService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +26,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final UserRepository        userRepository;
 
-    //Create
+    //Create 
 
     @Override
     @Transactional
@@ -38,16 +42,16 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new RuntimeException("Selected user is not a doctor.");
         }
 
-        // Slot conflict — same doctor, same date, same startTime, not cancelled
-        boolean conflict = appointmentRepository
-                .existsByDoctorIdAndAppointmentDateAndStartTimeAndStatusNot(
-                        doctor.getId(),
-                        dto.getAppointmentDate(),
-                        dto.getStartTime(),
-                        AppointmentStatus.CANCELLED
-                );
+        // Use existing findOverlappingAppointments — more robust than existsBy check
+        // catches partial time overlaps, not just exact startTime matches
+        List<Appointment> overlaps = appointmentRepository.findOverlappingAppointments(
+                doctor,
+                dto.getAppointmentDate(),
+                dto.getStartTime(),
+                dto.getEndTime()
+        );
 
-        if (conflict) {
+        if (!overlaps.isEmpty()) {
             throw new RuntimeException("This slot is already booked. Please choose a different time.");
         }
 
@@ -58,7 +62,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setStartTime(dto.getStartTime());
         appointment.setEndTime(dto.getEndTime());
         appointment.setStatus(AppointmentStatus.BOOKED);
-        appointment.setFee(0.0);  // update fee logic later via doctor profile
+        appointment.setFee(0.0);
 
         return toResponse(appointmentRepository.save(appointment));
     }
@@ -72,11 +76,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Use existing findByPatient / findByDoctor — pass full User object
         List<Appointment> appointments = switch (role) {
-            case "ROLE_PATIENT" -> appointmentRepository
-                    .findByPatientIdOrderByAppointmentDateDescStartTimeAsc(user.getId());
-            case "ROLE_DOCTOR"  -> appointmentRepository
-                    .findByDoctorIdOrderByAppointmentDateDescStartTimeAsc(user.getId());
+            case "ROLE_PATIENT" -> appointmentRepository.findByPatient(user);
+            case "ROLE_DOCTOR"  -> appointmentRepository.findByDoctor(user);
             case "ROLE_ADMIN"   -> appointmentRepository.findAll();
             default -> throw new RuntimeException("Unknown role: " + role);
         };
@@ -104,7 +107,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         return toResponse(appt);
     }
 
-    //Mapper
+    //Mapper 
 
     private AppointmentResponseDTO toResponse(Appointment a) {
         return new AppointmentResponseDTO(
