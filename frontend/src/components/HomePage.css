@@ -1,0 +1,75 @@
+/* Full page container */
+.home-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #e3f2fd, #ffffff);
+  padding: 20px;
+  text-align: center;
+}
+
+/* Heading */
+.home-title {
+  font-size: 2.8rem;
+  margin-bottom: 50px;
+  color: #0d47a1;
+  font-weight: 600;
+}
+
+/* Button container */
+.button-group {
+  display: flex;
+  gap: 30px;
+}
+
+/* Buttons */
+.home-btn {
+  padding: 14px 40px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #1976d2;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.home-btn:hover {
+  background-color: #0d47a1;
+  transform: scale(1.08);
+}
+
+/* 🔵 Tablet View */
+@media (max-width: 992px) {
+  .home-title {
+    font-size: 2.2rem;
+  }
+
+  .button-group {
+    gap: 20px;
+  }
+
+  .home-btn {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+  }
+}
+
+/* 🟢 Mobile View */
+@media (max-width: 600px) {
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .home-btn {
+    width: 100%;
+  }
+
+  .home-title {
+    font-size: 1.8rem;
+  }
+}
