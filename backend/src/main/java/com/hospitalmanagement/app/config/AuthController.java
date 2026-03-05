@@ -5,7 +5,6 @@ import com.hospitalmanagement.app.dto.RegisterRequestDTO;
 import com.hospitalmanagement.app.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
