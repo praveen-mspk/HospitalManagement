@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
@@ -18,36 +15,79 @@ function SignupPage() {
     mobile: ""
   });
 
+  // Email validation
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  // Mobile validation (10 digits)
+  const validateMobile = (mobile) => {
+    const regex = /^[0-9]{10}$/;
+    return regex.test(mobile);
+  };
+
+  // Strong password validation
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+    return regex.test(password);
+  };
+
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    return age;
+    return today.getFullYear() - birthDate.getFullYear();
   };
 
   const handleSubmit = () => {
-    if (!formData.email || !formData.password) {
-      alert("Email and Password are required");
+    const {
+      name,
+      dob,
+      gender,
+      email,
+      password,
+      confirmPassword,
+      mobile
+    } = formData;
+
+    // Required fields
+    if (!name || !dob || !gender || !email || !password || !confirmPassword || !mobile) {
+      alert("All fields are required");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (!validateEmail(email)) {
+      alert("Invalid Email format");
+      return;
+    }
+
+    if (!validateMobile(mobile)) {
+      alert("Mobile number must be 10 digits");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      alert(
+        "Password must contain at least 6 characters, one uppercase, one lowercase and one number"
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
 
-    const age = calculateAge(formData.dob);
-
+    const age = calculateAge(dob);
     if (age < 1) {
-      alert("Invalid Age");
+      alert("Invalid Date of Birth");
       return;
     }
 
     let patients = JSON.parse(localStorage.getItem("patients")) || [];
 
-    // 🔴 Check if email already exists
     const existingUser = patients.find(
-      (p) => p.email === formData.email
+      (p) => p.email.toLowerCase() === email.toLowerCase()
     );
 
     if (existingUser) {
@@ -56,7 +96,6 @@ function SignupPage() {
       return;
     }
 
-    // ✅ Save new patient
     patients.push(formData);
     localStorage.setItem("patients", JSON.stringify(patients));
 

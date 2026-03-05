@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
@@ -8,9 +7,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showSignup, setShowSignup] = useState(false);
 
-  // Predefined users (Admin & Doctors only)
   const predefinedUsers = [
     { email: "admin@hospital.com", password: "admin123", role: "ADMIN" },
     { email: "doctor1@hospital.com", password: "doc123", role: "DOCTOR" },
@@ -21,7 +18,7 @@ function LoginPage() {
     const enteredEmail = email.trim().toLowerCase();
     const enteredPassword = password.trim();
 
-    // 1️⃣ Check predefined users
+    // Check admin & doctors
     const predefinedUser = predefinedUsers.find(
       (user) =>
         user.email.toLowerCase() === enteredEmail &&
@@ -37,7 +34,7 @@ function LoginPage() {
       return;
     }
 
-    // 2️⃣ Check patients from localStorage
+    // Check patients
     const patients =
       JSON.parse(localStorage.getItem("patients")) || [];
 
@@ -54,9 +51,7 @@ function LoginPage() {
       return;
     }
 
-    // 3️⃣ If nothing matched
     alert("Invalid credentials");
-    setShowSignup(true);
   };
 
   return (
@@ -77,14 +72,13 @@ function LoginPage() {
 
       <button onClick={handleLogin}>Login</button>
 
-      {showSignup && (
-        <button
-          className="signup-btn"
-          onClick={() => navigate("/signup")}
-        >
-          New Patient? Sign Up
-        </button>
-      )}
+      {/* ✅ Always visible signup button */}
+      <button
+        className="signup-btn"
+        onClick={() => navigate("/signup")}
+      >
+        New Patient? Sign Up
+      </button>
     </div>
   );
 }
