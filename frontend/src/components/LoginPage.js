@@ -8,83 +8,92 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showSignup, setShowSignup] = useState(false);
 
-  // Predefined users (Admin & Doctors only)
-  const predefinedUsers = [
-    { email: "admin@hospital.com", password: "admin123", role: "ADMIN" },
-    { email: "doctor1@hospital.com", password: "doc123", role: "DOCTOR" },
-    { email: "doctor2@hospital.com", password: "doc456", role: "DOCTOR" }
-  ];
-
-  const handleLogin = () => {
-    const enteredEmail = email.trim().toLowerCase();
+  const handleLogin = async () => {
+    const enteredEmail = email.trim();
     const enteredPassword = password.trim();
 
-    // 1️⃣ Check predefined users
-    const predefinedUser = predefinedUsers.find(
-      (user) =>
-        user.email.toLowerCase() === enteredEmail &&
-        user.password === enteredPassword
-    );
-
-    if (predefinedUser) {
-      localStorage.setItem("role", predefinedUser.role);
-      localStorage.setItem("email", predefinedUser.email);
-
-      if (predefinedUser.role === "ADMIN") navigate("/admin");
-      if (predefinedUser.role === "DOCTOR") navigate("/doctor");
+    // Dummy Admin 
+    if (enteredEmail === "admin@hospital.com" && enteredPassword === "admin") {
+      const dummyAdmin = {
+        id: 0,
+        name: "Super Admin",
+        email: "admin@hospital.com",
+        role: "ADMIN"
+      };
+      localStorage.setItem("role", dummyAdmin.role);
+      localStorage.setItem("email", dummyAdmin.email);
+      localStorage.setItem("userId", dummyAdmin.id);
+      localStorage.setItem("name", dummyAdmin.name);
+      navigate("/admin");
       return;
     }
 
-    // 2️⃣ Check patients from localStorage
-    const patients =
-      JSON.parse(localStorage.getItem("patients")) || [];
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: enteredEmail, password: enteredPassword })
+      });
 
-    const patientUser = patients.find(
-      (patient) =>
-        patient.email.toLowerCase() === enteredEmail &&
-        patient.password === enteredPassword
-    );
+      if (response.ok) {
+        const user = await response.json();
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("email", user.email);
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("name", user.name);
 
-    if (patientUser) {
-      localStorage.setItem("role", "PATIENT");
-      localStorage.setItem("email", patientUser.email);
-      navigate("/patient");
-      return;
+        if (user.role === "ADMIN") navigate("/admin");
+        else if (user.role === "DOCTOR") navigate("/doctor");
+        else if (user.role === "PATIENT") navigate("/patient");
+      } else {
+        let errorMsg = "Invalid credentials";
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch (e) {
+          // Fallback if not JSON
+          const raw = await response.text();
+          if (raw && raw.length < 100) errorMsg = raw;
+        }
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert("Network error. Is the backend running?");
     }
-
-    // 3️⃣ If nothing matched
-    alert("Invalid credentials");
-    setShowSignup(true);
   };
 
   return (
-    <div className="login-container">
-      <h2>Hospital Management System</h2>
+    <div className="auth-wrapper">
+      <h1 className="brand-header">Medi<span>Core</span></h1>
+      <div className="login-container">
+        <h2 style={{ marginBottom: "25px" }}>Sign In</h2>
 
-      <input
-        type="email"
-        placeholder="Enter Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <input
+          type="email"
+          placeholder="Enter Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Enter Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Enter Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleLogin}>Login</button>
+        <button onClick={handleLogin}>Login</button>
 
-      {showSignup && (
-        <button
-          className="signup-btn"
-          onClick={() => navigate("/signup")}
-        >
-          New Patient? Sign Up
-        </button>
-      )}
+        <div className="signup-footer">
+          New User?
+          <button
+            className="signup-link"
+            onClick={() => navigate("/signup")}
+          >
+            Sign Up
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

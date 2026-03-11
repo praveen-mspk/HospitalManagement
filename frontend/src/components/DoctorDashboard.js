@@ -8,25 +8,33 @@ function DoctorDashboard() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email");
 
-  const [activeTab, setActiveTab]       = useState("appointments");
+  const [activeTab, setActiveTab] = useState("appointments");
   const [appointments, setAppointments] = useState([]);
-  const [alert, setAlert]               = useState(null);
-  const [loading, setLoading]           = useState(false);
+  const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [slotForm, setSlotForm] = useState({ date: "", startTime: "", endTime: "" });
 
   useEffect(() => { fetchAppointments(); }, []);
 
   async function fetchAppointments() {
+    const role = localStorage.getItem("role");
+    const email = localStorage.getItem("email");
     try {
-      const res = await fetch(`${API}/appointments`, { credentials: "include" });
+      const res = await fetch(`${API}/appointments`, {
+        credentials: "include",
+        headers: {
+          "X-User-Email": email,
+          "X-User-Role": role
+        }
+      });
       if (res.ok) setAppointments(await res.json());
     } catch (e) { console.error(e); }
   }
 
   async function handleConfirm(id) {
     try {
-      const res = await fetch(`${API}/doctors/appointments/${id}/confirm`, {
+      const res = await fetch(`${API}/doctor/appointments/${id}/confirm`, {
         method: "PUT", credentials: "include"
       });
       if (res.ok) { showAlert("Appointment confirmed!", "success"); fetchAppointments(); }
@@ -37,8 +45,9 @@ function DoctorDashboard() {
   async function handleAddSlot(e) {
     e.preventDefault();
     setLoading(true);
+    const doctorId = localStorage.getItem("userId");
     try {
-      const res = await fetch(`${API}/doctors/slots`, {
+      const res = await fetch(`${API}/doctor/${doctorId}/slots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -59,7 +68,7 @@ function DoctorDashboard() {
 
   function handleLogout() { localStorage.clear(); navigate("/"); }
 
-  const booked    = appointments.filter(a => a.status === "BOOKED").length;
+  const booked = appointments.filter(a => a.status === "BOOKED").length;
   const confirmed = appointments.filter(a => a.status === "CONFIRMED").length;
   const completed = appointments.filter(a => a.status === "COMPLETED").length;
 
@@ -67,11 +76,11 @@ function DoctorDashboard() {
     <div className="dashboard-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-logo">🏥 <span>MediCore</span><br/>Doctor Panel</div>
+        <div className="sidebar-logo">🏥 <span>MediCore</span><br />Doctor Panel</div>
         <nav className="sidebar-nav">
           {[
             { key: "appointments", icon: "📋", label: "Appointments" },
-            { key: "slots",        icon: "🕐", label: "My Slots"     },
+            { key: "slots", icon: "🕐", label: "My Slots" },
           ].map(item => (
             <div
               key={item.key}

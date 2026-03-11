@@ -13,6 +13,7 @@ import com.hospitalmanagement.app.dto.AdminDTO;
 import com.hospitalmanagement.app.entity.Admin;
 import com.hospitalmanagement.app.repository.AdminRepository;
 import com.hospitalmanagement.app.service.AdminService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -22,13 +23,16 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public Admin registerAdmin(AdminDTO adminDTO) {
 
         Admin admin = new Admin();
         admin.setName(adminDTO.getName());
         admin.setEmail(adminDTO.getEmail());
-        admin.setPassword(adminDTO.getPassword());
+        admin.setPassword(passwordEncoder.encode(adminDTO.getPassword()));
 
         return adminRepository.save(admin);
     }

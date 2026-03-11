@@ -2,6 +2,7 @@ package com.hospitalmanagement.app.config;
 
 import com.hospitalmanagement.app.dto.LoginRequestDTO;
 import com.hospitalmanagement.app.dto.RegisterRequestDTO;
+import com.hospitalmanagement.app.dto.UserResponseDTO;
 import com.hospitalmanagement.app.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
+    public ResponseEntity<UserResponseDTO> login(@RequestBody LoginRequestDTO request) {
         return ResponseEntity.ok(authService.login(request));
     }
 }

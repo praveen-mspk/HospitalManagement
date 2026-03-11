@@ -6,9 +6,6 @@ import com.hospitalmanagement.app.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,46 +19,38 @@ public class AppointmentController {
 
     //POST /api/appointments
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
     public ResponseEntity<AppointmentResponseDTO> createAppointment(
-            @RequestBody             AppointmentRequestDTO request,
-            @AuthenticationPrincipal UserDetails           principal
+            @RequestBody AppointmentRequestDTO request,
+            @RequestHeader("X-User-Email") String email
     ) {
-        AppointmentResponseDTO response = appointmentService.createAppointment(
-                request,
-                principal.getUsername()
-        );
+        AppointmentResponseDTO response = appointmentService.createAppointment(request, email);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     //GET /api/appointments
     @GetMapping
-    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     public ResponseEntity<List<AppointmentResponseDTO>> getAppointments(
-            @AuthenticationPrincipal UserDetails principal
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("X-User-Role") String role
     ) {
-        // Spring Security prefixes roles with ROLE_ internally
-        String role = principal.getAuthorities().iterator().next().getAuthority();
-        List<AppointmentResponseDTO> response = appointmentService.getAppointments(
-                principal.getUsername(),
-                role
-        );
+        List<AppointmentResponseDTO> response = appointmentService.getAppointments(email, role);
         return ResponseEntity.ok(response);
     }
 
     //GET /api/appointments/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     public ResponseEntity<AppointmentResponseDTO> getAppointmentById(
-            @PathVariable            Long        id,
-            @AuthenticationPrincipal UserDetails principal
+            @PathVariable Long id,
+            @RequestHeader("X-User-Email") String email,
+            @RequestHeader("X-User-Role") String role
     ) {
-        String role = principal.getAuthorities().iterator().next().getAuthority();
-        AppointmentResponseDTO response = appointmentService.getAppointmentById(
-                id,
-                principal.getUsername(),
-                role
-        );
+        AppointmentResponseDTO response = appointmentService.getAppointmentById(id, email, role);
         return ResponseEntity.ok(response);
+    }
+
+    //PUT /api/appointments/{id}/cancel
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<AppointmentResponseDTO> cancelAppointment(@PathVariable Long id) {
+        return ResponseEntity.ok(appointmentService.cancelAppointment(id));
     }
 }

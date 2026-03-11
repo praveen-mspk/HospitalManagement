@@ -1,7 +1,9 @@
 package com.hospitalmanagement.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -28,10 +30,15 @@ public class User {
 
     private String specialization;
 
+    private LocalDate dob;
+    private String gender;
+    private String mobile;
+
     @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
     private List<AvailableSlot> availableSlots;
 }
