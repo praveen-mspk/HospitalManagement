@@ -7,6 +7,9 @@ import com.hospitalmanagement.app.repository.*;
 import com.hospitalmanagement.app.service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -17,22 +20,34 @@ public class DoctorServiceImpl implements DoctorService {
     private final AppointmentRepository appointmentRepository;
 
     @Override
-    public Object addAvailableSlot(Long doctorId, AvailableSlotRequestDTO dto) {
+    @Transactional
+    public List<AvailableSlot> addAvailableSlot(Long doctorId, AvailableSlotRequestDTO dto) {
 
         User doctor = userRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        AvailableSlot slot = new AvailableSlot();
-        slot.setDoctor(doctor);
-        slot.setDate(dto.getDate());
-        slot.setStartTime(dto.getStartTime());
-        slot.setEndTime(dto.getEndTime());
+        java.time.LocalTime currentStart = dto.getStartTime();
+        java.time.LocalTime end = dto.getEndTime();
+        java.util.List<AvailableSlot> createdSlots = new java.util.ArrayList<>();
 
-        return slotRepository.save(slot);
+        // Loop and split into 20-minute chunks
+        while (currentStart.plusMinutes(20).isBefore(end) || currentStart.plusMinutes(20).equals(end)) {
+            AvailableSlot slot = new AvailableSlot();
+            slot.setDoctor(doctor);
+            slot.setDate(dto.getDate());
+            slot.setStartTime(currentStart);
+            slot.setEndTime(currentStart.plusMinutes(20));
+            
+            createdSlots.add(slotRepository.save(slot));
+            
+            currentStart = currentStart.plusMinutes(20);
+        }
+
+        return createdSlots;
     }
 
     @Override
-    public Object getDoctorAppointments(Long doctorId) {
+    public List<Appointment> getDoctorAppointments(Long doctorId) {
 
         User doctor = userRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));

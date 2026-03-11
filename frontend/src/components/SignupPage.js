@@ -18,16 +18,27 @@ function SignupPage() {
     mobile: ""
   });
 
-  const calculateAge = (dob) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    return age;
-  };
+  // const calculateAge = (dob) => {
+  //   const birthDate = new Date(dob);
+  //   const today = new Date();
+  //   let age = today.getFullYear() - birthDate.getFullYear();
+  //   return age;
+  // };
 
-  const handleSubmit = () => {
-    if (!formData.email || !formData.password) {
-      alert("Email and Password are required");
+  const handleSubmit = async () => {
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.password || !formData.dob) {
+      alert("Name, Email, Password, and DOB are required");
+      return;
+    }
+
+    // Future date validation
+    const selectedDate = new Date(formData.dob);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Compare only dates
+
+    if (selectedDate > today) {
+      alert("Date of Birth cannot be in the future");
       return;
     }
 
@@ -36,113 +47,148 @@ function SignupPage() {
       return;
     }
 
-    const age = calculateAge(formData.dob);
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          dob: formData.dob,
+          gender: formData.gender,
+          mobile: formData.mobile,
+          role: "PATIENT"
+        })
+      });
 
-    if (age < 1) {
-      alert("Invalid Age");
-      return;
+      if (response.ok) {
+        alert("Signup Successful. Please Login.");
+        navigate("/");
+      } else {
+        const errorMsg = await response.text();
+        alert(errorMsg || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Signup Error:", error);
+      alert("Network error. Is the backend running?");
     }
-
-    let patients = JSON.parse(localStorage.getItem("patients")) || [];
-
-    // 🔴 Check if email already exists
-    const existingUser = patients.find(
-      (p) => p.email === formData.email
-    );
-
-    if (existingUser) {
-      alert("Email already registered. Please login.");
-      navigate("/");
-      return;
-    }
-
-    // ✅ Save new patient
-    patients.push(formData);
-    localStorage.setItem("patients", JSON.stringify(patients));
-
-    alert("Signup Successful. Please Login.");
-    navigate("/");
   };
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   return (
-    <div className="login-container">
-      <h2>Patient Signup</h2>
+    <div className="auth-wrapper">
+      <h1 className="brand-header">Medi<span>Core</span></h1>
+      <div className="login-container">
+        <h2 style={{ marginBottom: "30px" }}>Patient Signup</h2>
 
-      <input
-        type="text"
-        placeholder="Full Name"
-        onChange={(e) =>
-          setFormData({ ...formData, name: e.target.value })
-        }
-      />
+        <div className="form-row">
+          <label className="form-label">Full Name</label>
+          <div className="form-input-box">
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+        </div>
 
-      <input
-        type="date"
-        onChange={(e) =>
-          setFormData({ ...formData, dob: e.target.value })
-        }
-      />
+        <div className="form-row">
+          <label className="form-label">Date of Birth</label>
+          <div className="form-input-box">
+            <input
+              type="date"
+              name="dob"
+              max={todayStr}
+              value={formData.dob}
+              onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+            />
+          </div>
+        </div>
 
-      <div className="radio-group">
-        <label>
-          <input
-            type="radio"
-            name="gender"
-            value="Male"
-            onChange={(e) =>
-              setFormData({ ...formData, gender: e.target.value })
-            }
-          /> Male
-        </label>
+        <div className="form-row">
+          <label className="form-label">Gender</label>
+          <div className="form-input-box">
+            <div className="radio-group" style={{ justifyContent: "flex-start", gap: "25px", margin: 0 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="gender"
+                  value="Male"
+                  checked={formData.gender === "Male"}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                /> Male
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="gender"
+                  value="Female"
+                  checked={formData.gender === "Female"}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                /> Female
+              </label>
+            </div>
+          </div>
+        </div>
 
-        <label>
-          <input
-            type="radio"
-            name="gender"
-            value="Female"
-            onChange={(e) =>
-              setFormData({ ...formData, gender: e.target.value })
-            }
-          /> Female
-        </label>
+        <div className="form-row">
+          <label className="form-label">Email Address</label>
+          <div className="form-input-box">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <label className="form-label">Password</label>
+          <div className="form-input-box">
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <label className="form-label">Confirm Pwd</label>
+          <div className="form-input-box">
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <label className="form-label">Mobile Number</label>
+          <div className="form-input-box">
+            <input
+              type="text"
+              name="mobile"
+              placeholder="Mobile Number"
+              value={formData.mobile}
+              onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <button onClick={handleSubmit} style={{ marginTop: "10px" }}>Submit</button>
       </div>
-
-      <input
-        type="email"
-        placeholder="Email"
-        onChange={(e) =>
-          setFormData({ ...formData, email: e.target.value })
-        }
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) =>
-          setFormData({ ...formData, password: e.target.value })
-        }
-      />
-
-      <input
-        type="password"
-        placeholder="Confirm Password"
-        onChange={(e) =>
-          setFormData({
-            ...formData,
-            confirmPassword: e.target.value
-          })
-        }
-      />
-
-      <input
-        type="text"
-        placeholder="Mobile Number"
-        onChange={(e) =>
-          setFormData({ ...formData, mobile: e.target.value })
-        }
-      />
-
-      <button onClick={handleSubmit}>Submit</button>
     </div>
   );
 }

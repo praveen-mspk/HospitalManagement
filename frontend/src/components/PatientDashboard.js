@@ -8,14 +8,14 @@ function PatientDashboard() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email");
 
-  const [activeTab, setActiveTab]           = useState("appointments");
-  const [appointments, setAppointments]     = useState([]);
+  const [activeTab, setActiveTab] = useState("appointments");
+  const [appointments, setAppointments] = useState([]);
   const [specializations, setSpecializations] = useState([]);
-  const [doctors, setDoctors]               = useState([]);
-  const [slots, setSlots]                   = useState([]);
-  const [alert, setAlert]                   = useState(null);
-  const [loading, setLoading]               = useState(false);
-  const [showModal, setShowModal]           = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const [bookForm, setBookForm] = useState({
     specialization: "", doctorId: "", slotId: "",
@@ -25,29 +25,37 @@ function PatientDashboard() {
   useEffect(() => { fetchAppointments(); fetchSpecializations(); }, []);
 
   async function fetchAppointments() {
+    const role = localStorage.getItem("role");
+    const email = localStorage.getItem("email");
     try {
-      const res = await fetch(`${API}/appointments`, { credentials: "include" });
+      const res = await fetch(`${API}/appointments`, {
+        credentials: "include",
+        headers: {
+          "X-User-Email": email,
+          "X-User-Role": role
+        }
+      });
       if (res.ok) setAppointments(await res.json());
     } catch (e) { console.error(e); }
   }
 
   async function fetchSpecializations() {
     try {
-      const res = await fetch(`${API}/doctors/specializations`, { credentials: "include" });
+      const res = await fetch(`${API}/public/specializations`, { credentials: "include" });
       if (res.ok) setSpecializations(await res.json());
     } catch (e) { console.error(e); }
   }
 
   async function fetchDoctorsBySpecialization(spec) {
     try {
-      const res = await fetch(`${API}/doctors?specialization=${encodeURIComponent(spec)}`, { credentials: "include" });
+      const res = await fetch(`${API}/public/doctors?specialization=${encodeURIComponent(spec)}`, { credentials: "include" });
       if (res.ok) setDoctors(await res.json());
     } catch (e) { console.error(e); }
   }
 
   async function fetchSlots(doctorId) {
     try {
-      const res = await fetch(`${API}/doctors/${doctorId}/slots`, { credentials: "include" });
+      const res = await fetch(`${API}/public/doctors/${doctorId}/slots`, { credentials: "include" });
       if (res.ok) setSlots(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -83,9 +91,15 @@ function PatientDashboard() {
     e.preventDefault();
     setLoading(true);
     try {
+      const email = localStorage.getItem("email");
+      const role = localStorage.getItem("role");
       const res = await fetch(`${API}/appointments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Email": email,
+          "X-User-Role": role
+        },
         credentials: "include",
         body: JSON.stringify({
           doctorId: Number(bookForm.doctorId),
@@ -115,7 +129,7 @@ function PatientDashboard() {
 
   function handleLogout() { localStorage.clear(); navigate("/"); }
 
-  const booked    = appointments.filter(a => a.status === "BOOKED").length;
+  const booked = appointments.filter(a => a.status === "BOOKED").length;
   const confirmed = appointments.filter(a => a.status === "CONFIRMED").length;
   const completed = appointments.filter(a => a.status === "COMPLETED").length;
 
@@ -123,11 +137,11 @@ function PatientDashboard() {
     <div className="dashboard-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-logo">🏥 <span>MediCore</span><br/>Patient Portal</div>
+        <div className="sidebar-logo">🏥 <span>MediCore</span><br />Patient Portal</div>
         <nav className="sidebar-nav">
           {[
             { key: "appointments", icon: "📋", label: "My Appointments" },
-            { key: "book",         icon: "➕", label: "Book Appointment" },
+            { key: "book", icon: "➕", label: "Book Appointment" },
           ].map(item => (
             <div
               key={item.key}
@@ -148,7 +162,7 @@ function PatientDashboard() {
       <main className="main-content">
         {alert && <div className={`alert alert-${alert.type}`}>{alert.msg}</div>}
 
-        <div className="page-header" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+        <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h1>My Appointments</h1>
             <p>Track your scheduled visits</p>
@@ -229,6 +243,11 @@ function PatientDashboard() {
                 </div>
 
                 {/* Step 2: Doctor */}
+                {bookForm.specialization && doctors.length === 0 && (
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>
+                    No doctors available for this specialization.
+                  </p>
+                )}
                 {doctors.length > 0 && (
                   <div className="form-group">
                     <label>Doctor</label>

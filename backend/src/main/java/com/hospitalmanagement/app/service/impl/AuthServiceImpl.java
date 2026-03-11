@@ -2,6 +2,8 @@ package com.hospitalmanagement.app.service.impl;
 
 import com.hospitalmanagement.app.dto.LoginRequestDTO;
 import com.hospitalmanagement.app.dto.RegisterRequestDTO;
+import com.hospitalmanagement.app.dto.UserResponseDTO;
+import com.hospitalmanagement.app.entity.Department;
 import com.hospitalmanagement.app.entity.User;
 import com.hospitalmanagement.app.repository.DepartmentRepository;
 import com.hospitalmanagement.app.repository.UserRepository;
@@ -9,6 +11,7 @@ import com.hospitalmanagement.app.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -28,10 +31,25 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(request.getRole());
         user.setSpecialization(request.getSpecialization());
 
+        if (request.getDob() != null && !request.getDob().isEmpty()) {
+            user.setDob(LocalDate.parse(request.getDob()));
+        }
+        user.setGender(request.getGender());
+        user.setMobile(request.getMobile());
+
         if (request.getDepartmentId() != null) {
             user.setDepartment(
                     departmentRepository.findById(request.getDepartmentId())
                             .orElseThrow(() -> new RuntimeException("Department not found"))
+            );
+        } else if (request.getDepartmentName() != null && !request.getDepartmentName().isEmpty()) {
+            user.setDepartment(
+                    departmentRepository.findByName(request.getDepartmentName())
+                            .orElseGet(() -> {
+                                Department newDept = new Department();
+                                newDept.setName(request.getDepartmentName());
+                                return departmentRepository.save(newDept);
+                            })
             );
         }
 
@@ -40,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String login(LoginRequestDTO request) {
+    public UserResponseDTO login(LoginRequestDTO request) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid Email"));
@@ -49,6 +67,12 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid Password");
         }
 
-        return "Login Successful";
+        return new UserResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getSpecialization()
+        );
     }
 }

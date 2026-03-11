@@ -8,12 +8,12 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const email = localStorage.getItem("email");
 
-  const [activeTab, setActiveTab]       = useState("overview");
+  const [activeTab, setActiveTab] = useState("overview");
   const [appointments, setAppointments] = useState([]);
-  const [doctors, setDoctors]           = useState([]);
-  const [alert, setAlert]               = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [alert, setAlert] = useState(null);
   const [showAddDoctor, setShowAddDoctor] = useState(false);
-  const [loading, setLoading]           = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [doctorForm, setDoctorForm] = useState({
     name: "", email: "", password: "",
@@ -26,15 +26,23 @@ function AdminDashboard() {
   }, []);
 
   async function fetchAppointments() {
+    const role = localStorage.getItem("role");
+    const email = localStorage.getItem("email");
     try {
-      const res = await fetch(`${API}/appointments`, { credentials: "include" });
+      const res = await fetch(`${API}/appointments`, {
+        credentials: "include",
+        headers: {
+          "X-User-Email": email,
+          "X-User-Role": role
+        }
+      });
       if (res.ok) setAppointments(await res.json());
     } catch (e) { console.error(e); }
   }
 
   async function fetchDoctors() {
     try {
-      const res = await fetch(`${API}/doctors`, { credentials: "include" });
+      const res = await fetch(`${API}/public/doctors`, { credentials: "include" });
       if (res.ok) setDoctors(await res.json());
     } catch (e) { console.error(e); }
   }
@@ -60,7 +68,11 @@ function AdminDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ...doctorForm, role: "DOCTOR" })
+        body: JSON.stringify({
+          ...doctorForm,
+          departmentName: doctorForm.department, // Map 'department' to 'departmentName'
+          role: "DOCTOR"
+        })
       });
       if (res.ok) {
         showAlert("Doctor added successfully!", "success");
@@ -85,21 +97,21 @@ function AdminDashboard() {
     navigate("/");
   }
 
-  const confirmed  = appointments.filter(a => a.status === "CONFIRMED").length;
-  const booked     = appointments.filter(a => a.status === "BOOKED").length;
-  const cancelled  = appointments.filter(a => a.status === "CANCELLED").length;
+  const confirmed = appointments.filter(a => a.status === "CONFIRMED").length;
+  const booked = appointments.filter(a => a.status === "BOOKED").length;
+  const cancelled = appointments.filter(a => a.status === "CANCELLED").length;
   // const completed  = appointments.filter(a => a.status === "COMPLETED").length;
 
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-logo">🏥 <span>MediCore</span><br/>Admin Panel</div>
+        <div className="sidebar-logo">🏥 <span>MediCore</span><br />Admin Panel</div>
         <nav className="sidebar-nav">
           {[
-            { key: "overview",      icon: "📊", label: "Overview"      },
-            { key: "appointments",  icon: "📋", label: "Appointments"  },
-            { key: "doctors",       icon: "👨‍⚕️", label: "Doctors"       },
+            { key: "overview", icon: "📊", label: "Overview" },
+            { key: "appointments", icon: "📋", label: "Appointments" },
+            { key: "doctors", icon: "👨‍⚕️", label: "Doctors" },
           ].map(item => (
             <div
               key={item.key}
@@ -186,7 +198,7 @@ function AdminDashboard() {
         {/* DOCTORS */}
         {activeTab === "doctors" && (
           <>
-            <div className="page-header" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <h1>Doctors</h1>
                 <p>Manage hospital doctors</p>
@@ -234,27 +246,27 @@ function AdminDashboard() {
                 <div className="form-group">
                   <label>Full Name</label>
                   <input required placeholder="Dr. John Smith" value={doctorForm.name}
-                    onChange={e => setDoctorForm({...doctorForm, name: e.target.value})} />
+                    onChange={e => setDoctorForm({ ...doctorForm, name: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label>Email</label>
                   <input required type="email" placeholder="doctor@hospital.com" value={doctorForm.email}
-                    onChange={e => setDoctorForm({...doctorForm, email: e.target.value})} />
+                    onChange={e => setDoctorForm({ ...doctorForm, email: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label>Password</label>
                   <input required type="password" placeholder="Temporary password" value={doctorForm.password}
-                    onChange={e => setDoctorForm({...doctorForm, password: e.target.value})} />
+                    onChange={e => setDoctorForm({ ...doctorForm, password: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label>Specialization</label>
                   <input placeholder="e.g. Cardiology" value={doctorForm.specialization}
-                    onChange={e => setDoctorForm({...doctorForm, specialization: e.target.value})} />
+                    onChange={e => setDoctorForm({ ...doctorForm, specialization: e.target.value })} />
                 </div>
                 <div className="form-group full">
                   <label>Department</label>
                   <input placeholder="e.g. Heart & Vascular" value={doctorForm.department}
-                    onChange={e => setDoctorForm({...doctorForm, department: e.target.value})} />
+                    onChange={e => setDoctorForm({ ...doctorForm, department: e.target.value })} />
                 </div>
               </div>
               <div className="modal-actions">

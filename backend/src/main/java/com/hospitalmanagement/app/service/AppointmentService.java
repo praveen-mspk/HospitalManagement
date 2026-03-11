@@ -12,4 +12,5 @@ public interface AppointmentService {
     List<AppointmentResponseDTO> getAppointments(String email, String role);
 
     AppointmentResponseDTO getAppointmentById(Long id, String callerEmail, String role);
+    AppointmentResponseDTO cancelAppointment(Long id);
 }

@@ -73,14 +73,20 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Transactional(readOnly = true)
     public List<AppointmentResponseDTO> getAppointments(String email, String role) {
 
+        String upperRole = role.toUpperCase();
+
+        if (upperRole.equals("ADMIN") || upperRole.equals("ROLE_ADMIN")) {
+            return appointmentRepository.findAll().stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Use existing findByPatient / findByDoctor — pass full User object
-        List<Appointment> appointments = switch (role) {
-            case "ROLE_PATIENT" -> appointmentRepository.findByPatient(user);
-            case "ROLE_DOCTOR"  -> appointmentRepository.findByDoctor(user);
-            case "ROLE_ADMIN"   -> appointmentRepository.findAll();
+        List<Appointment> appointments = switch (upperRole) {
+            case "ROLE_PATIENT", "PATIENT" -> appointmentRepository.findByPatient(user);
+            case "ROLE_DOCTOR", "DOCTOR"   -> appointmentRepository.findByDoctor(user);
             default -> throw new RuntimeException("Unknown role: " + role);
         };
 
@@ -96,7 +102,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment appt = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found: " + id));
 
-        boolean isAdmin   = role.equals("ROLE_ADMIN");
+        boolean isAdmin   = role.equalsIgnoreCase("ROLE_ADMIN") || role.equalsIgnoreCase("ADMIN");
         boolean isPatient = appt.getPatient().getEmail().equals(callerEmail);
         boolean isDoctor  = appt.getDoctor().getEmail().equals(callerEmail);
 
@@ -105,6 +111,15 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return toResponse(appt);
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponseDTO cancelAppointment(Long id) {
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found: " + id));
+        appt.setStatus(AppointmentStatus.CANCELLED);
+        return toResponse(appointmentRepository.save(appt));
     }
 
     //Mapper 

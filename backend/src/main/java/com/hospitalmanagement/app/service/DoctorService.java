@@ -1,12 +1,15 @@
 package com.hospitalmanagement.app.service;
 
 import com.hospitalmanagement.app.dto.AvailableSlotRequestDTO;
+import com.hospitalmanagement.app.entity.AvailableSlot;
+import com.hospitalmanagement.app.entity.Appointment;
+import java.util.List;
 
 public interface DoctorService {
 
-    Object addAvailableSlot(Long doctorId, AvailableSlotRequestDTO dto);
+    List<AvailableSlot> addAvailableSlot(Long doctorId, AvailableSlotRequestDTO dto);
 
-    Object getDoctorAppointments(Long doctorId);
+    List<Appointment> getDoctorAppointments(Long doctorId);
 
     String confirmAppointment(Long appointmentId);
 }
